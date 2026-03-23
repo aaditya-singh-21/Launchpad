@@ -5,6 +5,8 @@ import { register, login } from '../controllers/auth.controller';
 
 const router = Router()
 
-router.post('/api/auth/signup', authMiddleware, register )
+router.post('/api/auth/signup', register )
 
 router.post('/api/auth/signin', authMiddleware, login )
+
+export default router
