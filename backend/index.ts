@@ -4,6 +4,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
+import projectRoutes from "./routes/project.routes";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -24,6 +25,7 @@ app.get("/health", (_req, res) => {
 
 app.use(authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api", projectRoutes);
 
 // 404 handler
 app.use((_req, res) => {
