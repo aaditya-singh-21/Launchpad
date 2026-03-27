@@ -1,4 +1,3 @@
-import { UserModel } from "../models/user.model";
 import { Request, Response } from 'express';
 import { AuthRequest } from "../Interfaces/auth.interface";
 import { ProjectModel } from "../models/project.model";
