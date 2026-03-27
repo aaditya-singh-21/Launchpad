@@ -15,6 +15,7 @@ export const createProject = async (req: AuthRequest, res: Response) => {
             owner: req.user.id
         });
         res.status(201).json({
+            project,
             msg: "Project created successfully"
         })
     }

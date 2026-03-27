@@ -7,6 +7,6 @@ const router = Router()
 
 router.post('/api/auth/signup', register )
 
-router.post('/api/auth/signin', authMiddleware, login )
+router.post('/api/auth/signin', login )
 
 export default router

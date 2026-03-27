@@ -44,6 +44,7 @@ export const login = async (req: Request, res: Response) => {
             if (isMatch) {
                 const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!);
                 res.status(200).json({ 
+                    token,
                     msg : "Logged in successfully"
                  })
             } else {
