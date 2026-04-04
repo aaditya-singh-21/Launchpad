@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import SigninPage from './pages/SignInPage';
 import SignupPage from './pages/SignupPage';
+import ProtectedRoutes from "./components/ProtectedRoute";
+import ProfilePage from "./pages/ProfilePage";
+import { AuthProvider } from "./context/AuthContext";
 
 function App() {
   return (
@@ -15,11 +18,23 @@ function App() {
         </Button>
       </div>
       <Router>
-        <Routes>
-           <Route path="/" element={<LandingPage />} />
-          <Route path='/signin' element = {<SigninPage />}></Route>
-          <Route path='/signup' element = {<SignupPage/>}></Route>
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path='/signin' element={<SigninPage />}></Route>
+            <Route path='/signup' element={<SignupPage />}></Route>
+            <Route path='/profile' element={
+              <ProtectedRoutes>
+                <ProfilePage />
+              </ProtectedRoutes>
+            } />
+            <Route path="*" element={
+              <div style={{ padding: '100px', textAlign: 'center' }}>
+                <h2>Page Not Found</h2>
+              </div>
+            } />
+          </Routes>
+        </AuthProvider>
       </Router>
     </div>
   )
