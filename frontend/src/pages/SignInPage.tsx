@@ -1,16 +1,50 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import type { SubmitEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { buttonVariants } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { cn } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 const SignInPage: React.FC = () => {
-  const handleGoogleSignIn = (e: React.MouseEvent) => {
-    e.preventDefault();
-  };
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleGithubSignIn = (e: React.MouseEvent) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError('');
+
+    if (!email || !password) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/signin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.msg || 'Invalid credentials. Please try again.');
+        return;
+      }
+
+      login(data.token);
+      navigate('/profile');
+    } catch {
+      setError('Unable to connect to the server. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -22,8 +56,8 @@ const SignInPage: React.FC = () => {
         </div>
 
         <div className="flex flex-col gap-3 mb-6">
-          <button 
-            onClick={handleGoogleSignIn}
+          <button
+            type="button"
             className="flex items-center justify-center gap-2 w-full h-11 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-[#1a1a1a] hover:bg-gray-50 transition-colors"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
@@ -34,9 +68,9 @@ const SignInPage: React.FC = () => {
             </svg>
             Sign in with Google
           </button>
-          
-          <button 
-            onClick={handleGithubSignIn}
+
+          <button
+            type="button"
             className="flex items-center justify-center gap-2 w-full h-11 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-[#1a1a1a] hover:bg-gray-50 transition-colors"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
@@ -55,13 +89,15 @@ const SignInPage: React.FC = () => {
           </div>
         </div>
 
-        <form className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-1.5">
             <label className="text-[13px] font-semibold text-[#1a1a1a] pl-1" htmlFor="email">Email</label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="name@example.com" 
+            <Input
+              id="email"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="bg-white/60 border-gray-200 h-11 px-4 text-[14px] focus-visible:ring-[#E67A62]/20 focus-visible:border-[#E67A62]"
             />
           </div>
@@ -72,19 +108,36 @@ const SignInPage: React.FC = () => {
                 Forgot password?
               </Link>
             </div>
-            <Input 
-              id="password" 
-              type="password" 
-              placeholder="••••••••" 
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="bg-white/60 border-gray-200 h-11 px-4 text-[14px] focus-visible:ring-[#E67A62]/20 focus-visible:border-[#E67A62]"
             />
           </div>
 
-          <button 
-            type="button"
-            className={cn(buttonVariants({ size: "lg" }), "w-full h-11 bg-[#E67A62] hover:bg-[#D66D57] text-white rounded-xl font-bold border-none transition-transform hover:-translate-y-[1px] mt-2")}
+          {error && (
+            <p className="text-[13px] text-red-500 font-medium pl-1 animate-in fade-in slide-in-from-top-1">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className={cn(
+              buttonVariants({ size: 'lg' }),
+              'w-full h-11 bg-[#E67A62] hover:bg-[#D66D57] text-white rounded-xl font-bold border-none transition-all hover:-translate-y-[1px] mt-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0'
+            )}
           >
-            Sign In
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Signing in...
+              </span>
+            ) : 'Sign In'}
           </button>
         </form>
 
