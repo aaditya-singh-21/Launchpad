@@ -57,7 +57,7 @@ const SignUpPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-[80vh] flex flex-col justify-center items-center px-6 py-20 bg-[#faf7f2]">
+    <div className="w-full min-h-screen flex flex-col justify-center items-center px-6 pt-28 pb-16 bg-[#faf7f2]">
       <div className="w-full max-w-[420px] bg-white/70 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_20px_40px_rgba(0,0,0,0.04)] border border-white mt-12 mb-12">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-extrabold text-[#1a1a1a] mb-2 tracking-tight">Create an account</h1>

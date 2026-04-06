@@ -10,7 +10,12 @@ const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Request logging middleware
@@ -23,7 +28,7 @@ app.get("/health", (_req, res) => {
   res.status(200).json({ ok: true });
 });
 
-app.use(authRoutes);
+app.use("/api", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api", projectRoutes);
 
