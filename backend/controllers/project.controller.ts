@@ -1,10 +1,13 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from "../Interfaces/auth.interface";
 import { ProjectModel } from "../models/project.model";
+import { CreateProject, UpdateProject } from '../schemas/project.schema';
+import { ZodError } from 'zod';
 
 export const createProject = async (req: AuthRequest, res: Response) => {
     try {
-        const { title, description, techStack, githubLink, livelink } = req.body
+        const parsedData = CreateProject.parse(req.body)
+        const { title, description, techStack, githubLink, livelink } = parsedData
         const project = await ProjectModel.create({
             title,
             description,
@@ -19,6 +22,11 @@ export const createProject = async (req: AuthRequest, res: Response) => {
         })
     }
     catch (error) {
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                msg: "Input data error"
+            })
+        }
         res.status(500).json({
             msg: "Something went wrong"
         })
@@ -61,8 +69,9 @@ export const getProjectById = async (req: Request, res: Response) => {
 
 export const updateProject = async (req: AuthRequest, res: Response) => {
     try {
+        const parsedData = UpdateProject.parse(req.body)
         const { projectId } = req.params;
-        const { title, description, techStack, githubLink, livelink } = req.body
+        const { title, description, techStack, githubLink, livelink } = parsedData
         const project = await ProjectModel.findOne({ _id: projectId })
         if (!project) {
             return res.status(404).json({
@@ -85,6 +94,11 @@ export const updateProject = async (req: AuthRequest, res: Response) => {
 
     }
     catch (error) {
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                msg: "Input data error"
+            })
+        }
         res.status(500).json({
             msg: "Something went wrong"
         })

@@ -1,6 +1,8 @@
 import { UserModel } from "../models/user.model";
 import { Request, Response } from 'express';
 import { AuthRequest } from "../Interfaces/auth.interface";
+import { User } from "../schemas/user.schema";
+import { ZodError } from "zod";
 
 
 export const getMe = async (req: AuthRequest, res: Response) => {
@@ -19,7 +21,8 @@ export const getMe = async (req: AuthRequest, res: Response) => {
 
 export const updateMe = async (req: AuthRequest, res: Response) => {
     try {
-        const { name, bio, tech, socials } = req.body;
+        const parsedData = User.parse(req.body)
+        const { name, bio, tech, socials } = parsedData
 
         const updateData: {
             name?: string;
@@ -66,6 +69,11 @@ export const updateMe = async (req: AuthRequest, res: Response) => {
             msg: "User updated successfully"
         })
     } catch (error) {
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                msg: "Input data error"
+            })
+        }
         res.status(500).json({
             msg: "Something went wrong"
         })
