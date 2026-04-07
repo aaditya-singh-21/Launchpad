@@ -6,7 +6,7 @@ import { Router } from "express";
 const router = Router();
 
 router.post("/project", authMiddleware, createProject)
-router.get("/project", authMiddleware, getAllProjects)
+router.get("/project", getAllProjects)
 router.get("/project/:projectId", authMiddleware, getProjectById)
 router.put("/project/:projectId", authMiddleware, updateProject)
 router.delete("/project/:projectId", authMiddleware, deleteProject)

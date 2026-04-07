@@ -35,7 +35,7 @@ export const createProject = async (req: AuthRequest, res: Response) => {
 
 export const getAllProjects = async (req: Request, res: Response) => {
     try {
-        const response = await ProjectModel.find();
+        const response = await ProjectModel.find().populate('owner', 'name email');
         res.status(200).json({
             response
         })

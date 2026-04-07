@@ -4,6 +4,7 @@ import SigninPage from './pages/SignInPage';
 import SignupPage from './pages/SignupPage';
 import ProtectedRoutes from "./components/ProtectedRoute";
 import ProfilePage from "./pages/ProfilePage";
+import ExplorePage from "./pages/ExplorePage";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 
@@ -18,6 +19,7 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path='/signin' element={<SigninPage />} />
               <Route path='/signup' element={<SignupPage />} />
+              <Route path='/explore' element={<ExplorePage />} />
               <Route path='/profile' element={
                 <ProtectedRoutes>
                   <ProfilePage />

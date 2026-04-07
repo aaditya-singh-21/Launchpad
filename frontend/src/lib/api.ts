@@ -16,3 +16,15 @@ export const fetchWithAuth = async (endpoint: string, options: RequestInit = {})
 
     return response
 };
+
+export const fetchPublic = async (endpoint: string, options: RequestInit = {}) => {
+    const headers = new Headers(options.headers || {});
+    headers.set('Content-Type', 'application/json');
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+    });
+
+    return response;
+};

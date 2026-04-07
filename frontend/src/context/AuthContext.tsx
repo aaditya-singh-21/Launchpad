@@ -23,6 +23,7 @@ interface AuthContextType {
     token: string | null,
     login: (token: string) => void;
     logout: () => void;
+    refreshUser: () => Promise<void>;
     isLoading: boolean
 }
 
@@ -76,8 +77,20 @@ export const AuthProvider = ({ children }: Props) => {
         setUser(null);
     }
 
+    const refreshUser = async () => {
+        try {
+            const response = await fetchWithAuth('/user/me');
+            if (response.ok) {
+                const data = await response.json();
+                setUser(data.User);
+            }
+        } catch (error) {
+            console.error('Failed to refresh user', error);
+        }
+    }
+
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, token, login, logout, refreshUser, isLoading }}>
             {children}
         </AuthContext.Provider>
     )
