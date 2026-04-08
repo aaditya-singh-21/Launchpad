@@ -24,6 +24,10 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get("/", (_req, res) => {
+  res.status(200).send("Launchpad Backend is Live!");
+});
+
 app.get("/health", (_req, res) => {
   res.status(200).json({ ok: true });
 });
@@ -45,7 +49,9 @@ async function startServer() {
     }
 
     await mongoose.connect(MONGO_URI);
-    app.listen(PORT, () => {
+    
+    // Explicitly binding to '0.0.0.0' is the key fix here
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
