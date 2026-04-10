@@ -4,8 +4,6 @@
 
 Launchpad is a modern, full-stack platform designed for developers to showcase their projects, find inspiration, and connect with a community of creators. Whether you're building the next big thing or looking for your next collaborator, Launchpad provides the tools to put your work in the spotlight.
 
-![Launchpad Preview Placeholder](https://via.placeholder.com/1280x720?text=Launchpad+Project+Showcase)
-
 ---
 
 ## ✨ Features
@@ -15,7 +13,6 @@ Launchpad is a modern, full-stack platform designed for developers to showcase t
 - **📂 Project Management**: Full CRUD capabilities for showcasing your projects with titles, descriptions, tech stacks, and links.
 - **🔍 Discovery Hub**: Explore a trending section of projects from the global community.
 - **👤 Developer Profiles**: Dedicated profile pages showcasing all projects built by a developer.
-- **⚡ Performance**: Built with Vite for ultra-fast frontend development and Express for a lightweight, scalable backend.
 
 ---
 
@@ -27,14 +24,11 @@ Launchpad is a modern, full-stack platform designed for developers to showcase t
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
 - **Components**: [Shadcn/UI](https://ui.shadcn.com/)
 - **Icons**: [Lucide React](https://lucide.dev/)
-- **Routing**: [React Router 7](https://reactrouter.com/)
-- **Typography**: [Geist Sans](https://fontsource.com/fonts/geist-sans/)
 
 ### Backend
 - **Runtime**: [Node.js](https://nodejs.org/)
 - **Framework**: [Express.js](https://expressjs.com/)
 - **Database**: [MongoDB](https://www.mongodb.com/) (via [Mongoose](https://mongoosejs.com/))
-- **Validation**: [Zod](https://zod.dev/)
 - **Authentication**: [JSON Web Tokens (JWT)](https://jwt.io/) & [Bcrypt](https://github.com/kelektiv/node.bcrypt.js)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 
