@@ -19,10 +19,20 @@ const ProjectSchema = new Schema<IProject>({
         type : Schema.Types.ObjectId,
         ref : "User",
         required : true
+    },
+    upvotes : [{
+        type: Schema.Types.ObjectId,
+        ref : "User",
+    }],
+    upvoteCount : {
+        type : Number,
+        default : 0
     }
 
 }, {
     timestamps : true
 });
+
+ProjectSchema.index({upvoteCount : -1})
 
 export const ProjectModel = mongoose.model<IProject>("Project", ProjectSchema)
