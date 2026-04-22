@@ -98,9 +98,7 @@ Launchpad/
 
 ## 🛣️ Roadmap
 
-- [ ] **Upvoting/Likes**: Support for community-driven project rankings.
 - [ ] **Comments Section**: Interactive feedback loops for every project.
-- [ ] **Advanced Search**: Filter projects by tech stack, popularity, or date.
 - [ ] **User Notifications**: Get notified when someone interacts with your project.
 - [ ] **Dark Mode Support**: Seamless transition between light and dark themes.
 
