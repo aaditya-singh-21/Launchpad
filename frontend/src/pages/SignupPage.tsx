@@ -68,6 +68,7 @@ const SignUpPage: React.FC = () => {
         <div className="flex flex-col gap-3 mb-6">
           <button
             type="button"
+            onClick={() => window.location.href = `${API_BASE_URL}/api/auth/google`}
             className="flex items-center justify-center gap-2 w-full h-11 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-[#1a1a1a] hover:bg-gray-50 transition-colors"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">

@@ -135,3 +135,53 @@ export const deleteProject = async (req: AuthRequest, res: Response) => {
         })
     }
 }
+
+
+export const upvoteProject = async (req : AuthRequest, res : Response) => {
+    try {
+        const { projectId } = req.params;
+        const userId = req.user.id;
+
+        const project = await ProjectModel.findById(projectId).select("upvotes");
+        if (!project) {
+            return res.status(404).json({
+                msg: "Invalid projectId"
+            });
+        }
+
+        const hasUpvoted = (project.upvotes as any[]).some((upvoteUserId: any) => upvoteUserId.toString() === userId);
+
+        if (!hasUpvoted) {
+            await ProjectModel.updateOne(
+                { _id: projectId },
+                {
+                    $addToSet: { upvotes: userId },
+                    $inc: { upvoteCount: 1 }
+                }
+            );
+
+            return res.status(200).json({
+                msg: "Project upvoted",
+                upvoted: true
+            });
+        }
+
+        await ProjectModel.updateOne(
+            { _id: projectId },
+            {
+                $pull: { upvotes: userId },
+                $inc: { upvoteCount: -1 }
+            }
+        );
+
+        return res.status(200).json({
+            msg: "Project upvote removed",
+            upvoted: false
+        });
+    }
+    catch (error) {
+        return res.status(500).json({
+            msg: "Something went wrong"
+        });
+    }
+}

@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { fetchPublic } from '../lib/api';
+import { fetchPublic, fetchWithAuth } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export interface Owner {
   _id: string;
@@ -16,6 +18,8 @@ export interface Project {
   livelink?: string;
   owner: Owner;
   createdAt: string;
+  upvotes?: string[];
+  upvoteCount?: number;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -49,9 +53,13 @@ const GithubIcon = ({ className }: { className?: string }) => (
 const ProjectDetailModal = ({
   project,
   onClose,
+  onUpvote,
+  currentUserId,
 }: {
   project: Project | null;
   onClose: () => void;
+  onUpvote: (id: string, e?: React.MouseEvent) => void;
+  currentUserId?: string;
 }) => {
   if (!project) return null;
 
@@ -75,22 +83,22 @@ const ProjectDetailModal = ({
       />
 
       {/* Modal card */}
-      <div className="relative w-full max-w-[560px] bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.18)] border border-gray-100 z-10 flex flex-col max-h-[90vh]">
-        {/* Coloured accent bar + close button (outside scroll area) */}
-        <div className="relative shrink-0">
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#E67A62] to-[#F59E7E] rounded-t-3xl" />
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-4 w-8 h-8 flex items-center justify-center rounded-xl text-zinc-400 hover:text-zinc-700 hover:bg-gray-100 transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+      <div className="relative w-full max-w-[560px] bg-white rounded-3xl shadow-[0_32px_80px_rgba(0,0,0,0.18)] border border-gray-100 z-10 overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Coloured accent bar */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#E67A62] to-[#F59E7E] shrink-0" />
+        
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-xl text-zinc-400 hover:text-zinc-700 hover:bg-gray-100 transition-colors z-10"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
 
         {/* Scrollable body */}
-        <div className="overflow-y-auto flex-1 p-8 pt-6">
+        <div className="overflow-y-auto flex-1 p-8 pt-6 mt-2">
           {/* Title */}
           <h2 className="text-2xl font-extrabold text-[#1a1a1a] tracking-tight mb-2 pr-4">
             {project.title}
@@ -140,31 +148,46 @@ const ProjectDetailModal = ({
           )}
 
           {/* Links */}
-          {(project.githubLink || project.livelink) && (
-            <div className="flex gap-3 flex-wrap">
-              {project.githubLink && (
-                <a
-                  href={project.githubLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 text-[13px] font-semibold text-zinc-600 hover:text-[#1a1a1a] hover:border-gray-400 transition-all"
-                >
-                  <GithubIcon className="w-4 h-4" />
-                  View on GitHub
-                </a>
-              )}
-              {project.livelink && (
-                <a
-                  href={project.livelink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 h-10 px-5 rounded-xl bg-[#E67A62] hover:bg-[#D66D57] text-white text-[13px] font-bold transition-all hover:-translate-y-[1px] shadow-[0_4px_12px_rgba(230,122,98,0.3)]"
-                >
-                  Live Demo ↗
-                </a>
-              )}
-            </div>
-          )}
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={(e) => project && onUpvote(project._id, e)}
+              className={`flex items-center gap-2 h-10 px-4 rounded-xl border text-[13px] font-semibold transition-all ${
+                project?.upvotes?.includes(currentUserId || '')
+                  ? 'bg-[#E67A62]/10 border-[#E67A62]/30 text-[#E67A62] hover:bg-[#E67A62]/20'
+                  : 'bg-white border-gray-200 text-zinc-600 hover:text-[#1a1a1a] hover:border-gray-400'
+              }`}
+            >
+              <svg viewBox="0 0 24 24" fill={project?.upvotes?.includes(currentUserId || '') ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+              {project?.upvoteCount || 0}
+            </button>
+            {(project?.githubLink || project?.livelink) && (
+              <>
+                {project.githubLink && (
+                  <a
+                    href={project.githubLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 text-[13px] font-semibold text-zinc-600 hover:text-[#1a1a1a] hover:border-gray-400 transition-all"
+                  >
+                    <GithubIcon className="w-4 h-4" />
+                    View on GitHub
+                  </a>
+                )}
+                {project.livelink && (
+                  <a
+                    href={project.livelink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 h-10 px-5 rounded-xl bg-[#E67A62] hover:bg-[#D66D57] text-white text-[13px] font-bold transition-all hover:-translate-y-[1px] shadow-[0_4px_12px_rgba(230,122,98,0.3)]"
+                  >
+                    Live Demo ↗
+                  </a>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -175,9 +198,13 @@ const ProjectDetailModal = ({
 const ExploreCard = ({
   project,
   onClick,
+  onUpvote,
+  currentUserId,
 }: {
   project: Project;
   onClick: () => void;
+  onUpvote: (id: string, e: React.MouseEvent) => void;
+  currentUserId?: string;
 }) => {
   const ownerName = project.owner?.name ?? 'Unknown';
   const ownerInitials = getInitials(ownerName);
@@ -241,9 +268,24 @@ const ExploreCard = ({
           </span>
         </div>
 
-        <span className="text-[11px] text-zinc-400 group-hover:text-[#E67A62] transition-colors font-medium">
-          View details →
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={(e) => { e.stopPropagation(); onUpvote(project._id, e); }}
+            className={`flex items-center gap-1.5 text-[12px] font-bold transition-colors ${
+              project.upvotes?.includes(currentUserId || '')
+                ? 'text-[#E67A62]'
+                : 'text-zinc-400 group-hover:text-zinc-600'
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill={project.upvotes?.includes(currentUserId || '') ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+            {project.upvoteCount || 0}
+          </button>
+          <span className="text-[11px] text-zinc-400 group-hover:text-[#E67A62] transition-colors font-medium">
+            View details →
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -251,6 +293,8 @@ const ExploreCard = ({
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 const ExplorePage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -289,6 +333,39 @@ const ExplorePage = () => {
     projects.forEach((p) => p.techStack.forEach((t) => set.add(t)));
     return Array.from(set).sort();
   }, [projects]);
+
+  const handleUpvote = async (projectId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!user) {
+      navigate('/signin');
+      return;
+    }
+
+    setProjects(prev => prev.map(p => {
+      if (p._id === projectId) {
+        const hasUpvoted = p.upvotes?.includes(user._id);
+        const upvotes = hasUpvoted
+          ? (p.upvotes || []).filter(id => id !== user._id)
+          : [...(p.upvotes || []), user._id];
+        const upvoteCount = hasUpvoted
+          ? Math.max(0, (p.upvoteCount || 0) - 1)
+          : (p.upvoteCount || 0) + 1;
+        
+        const updatedProject = { ...p, upvotes, upvoteCount };
+        if (selectedProject?._id === projectId) {
+          setSelectedProject(updatedProject);
+        }
+        return updatedProject;
+      }
+      return p;
+    }));
+
+    try {
+      await fetchWithAuth(`/project/${projectId}/upvote`, { method: 'PATCH' });
+    } catch {
+      // Silently fail or revert on error
+    }
+  };
 
   // Filtered list
   const filtered = useMemo(() => {
@@ -438,6 +515,8 @@ const ExplorePage = () => {
                 key={project._id}
                 project={project}
                 onClick={() => setSelectedProject(project)}
+                onUpvote={handleUpvote}
+                currentUserId={user?._id}
               />
             ))}
           </div>
@@ -448,6 +527,8 @@ const ExplorePage = () => {
       <ProjectDetailModal
         project={selectedProject}
         onClose={() => setSelectedProject(null)}
+        onUpvote={handleUpvote}
+        currentUserId={user?._id}
       />
     </div>
   );

@@ -9,6 +9,8 @@ export interface IProject {
     livelink? : String,
     githubLink? : String
     owner : Types.ObjectId | IUser,
+    upvotes : Types.ObjectId[] | IUser,
+    upvoteCount : Number,
     createdAt : Date,
     updatedAt : Date
 }
