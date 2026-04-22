@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { buttonVariants } from './ui/button';
 import { Input } from './ui/input';
 import { cn } from '../lib/utils';
@@ -7,11 +7,18 @@ import { useAuth } from '../context/AuthContext';
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  const isExplore = location.pathname === '/explore';
+  const isProfile = location.pathname === '/profile';
+
+  const activeTabClass = "text-[#E67A62] relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-[#E67A62] after:rounded-sm";
+  const inactiveTabClass = "text-zinc-500 hover:text-[#E67A62]";
 
   return (
     <nav className="absolute top-0 left-0 w-full py-6 z-[100] bg-transparent">
@@ -23,13 +30,13 @@ const Navbar = () => {
           <div className="flex gap-6">
             <Link
               to="/explore"
-              className="text-sm font-medium text-[#E67A62] relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-[#E67A62] after:rounded-sm transition-colors duration-200"
+              className={cn("text-sm font-medium transition-colors duration-200", isExplore ? activeTabClass : inactiveTabClass)}
             >
               Explore
             </Link>
             <Link
-              to="/share"
-              className="text-sm font-medium text-zinc-500 hover:text-[#E67A62] transition-colors duration-200"
+              to="/profile"
+              className={cn("text-sm font-medium transition-colors duration-200", isProfile ? activeTabClass : inactiveTabClass)}
             >
               Share Project
             </Link>

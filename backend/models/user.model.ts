@@ -13,7 +13,15 @@ const UserSchema = new Schema<IUser>({
     },
     password: {
         type: String,
-        required: true
+        required: false
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    avatar: {
+        type: String
     },
     bio: {
         type: String

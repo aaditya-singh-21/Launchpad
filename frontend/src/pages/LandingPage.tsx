@@ -5,7 +5,7 @@ import { Badge } from '../components/ui/badge';
 import { cn } from '../lib/utils';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
-import { fetchPublic } from '../lib/api';
+import { fetchPublic, fetchWithAuth } from '../lib/api';
 import { type Project, getInitials, ownerColor } from './ExplorePage';
 
 // ── Code Preview Widget ───────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ const CodePreview = () => (
 );
 
 // ── Trending Project Card ─────────────────────────────────────────────────────
-const TrendingCard = ({ project, onClick }: { project: Project; onClick: () => void }) => {
+const TrendingCard = ({ project, onClick, onUpvote, currentUserId }: { project: Project; onClick: () => void; onUpvote: (id: string, e: React.MouseEvent) => void; currentUserId?: string; }) => {
   const ownerName = project.owner?.name ?? 'Unknown';
   const color = ownerColor(project.owner?._id ?? '0');
   const initials = getInitials(ownerName);
@@ -100,16 +100,31 @@ const TrendingCard = ({ project, onClick }: { project: Project; onClick: () => v
           </div>
           <span className="text-[12px] text-zinc-400 font-medium truncate max-w-[100px]">{ownerName}</span>
         </div>
-        {project.livelink && (
-          <span className="text-[11px] font-bold text-[#E67A62]">Live ↗</span>
-        )}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={(e) => { e.stopPropagation(); onUpvote(project._id, e); }}
+            className={`flex items-center gap-1.5 text-[12px] font-bold transition-colors ${
+              project.upvotes?.includes(currentUserId || '')
+                ? 'text-[#E67A62]'
+                : 'text-zinc-400 group-hover:text-zinc-600'
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill={project.upvotes?.includes(currentUserId || '') ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+            {project.upvoteCount || 0}
+          </button>
+          {project.livelink && (
+            <span className="text-[11px] font-bold text-[#E67A62]">Live ↗</span>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
 // ── Inline Detail Modal (reused from ExplorePage pattern) ─────────────────────
-const MiniModal = ({ project, onClose }: { project: Project | null; onClose: () => void }) => {
+const MiniModal = ({ project, onClose, onUpvote, currentUserId }: { project: Project | null; onClose: () => void; onUpvote: (id: string, e?: React.MouseEvent) => void; currentUserId?: string; }) => {
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleKey);
@@ -155,21 +170,36 @@ const MiniModal = ({ project, onClose }: { project: Project | null; onClose: () 
               </div>
             </div>
           )}
-          {(project.githubLink || project.livelink) && (
-            <div className="flex gap-3">
-              {project.githubLink && (
-                <a href={project.githubLink} target="_blank" rel="noreferrer" className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 text-[13px] font-semibold text-zinc-600 hover:text-[#1a1a1a] hover:border-gray-400 transition-all">
-                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
-                  View on GitHub
-                </a>
-              )}
-              {project.livelink && (
-                <a href={project.livelink} target="_blank" rel="noreferrer" className="flex items-center gap-2 h-10 px-5 rounded-xl bg-[#E67A62] hover:bg-[#D66D57] text-white text-[13px] font-bold transition-all hover:-translate-y-[1px] shadow-[0_4px_12px_rgba(230,122,98,0.3)]">
-                  Live Demo ↗
-                </a>
-              )}
-            </div>
-          )}
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={(e) => project && onUpvote(project._id, e)}
+              className={`flex items-center gap-2 h-10 px-4 rounded-xl border text-[13px] font-semibold transition-all ${
+                project?.upvotes?.includes(currentUserId || '')
+                  ? 'bg-[#E67A62]/10 border-[#E67A62]/30 text-[#E67A62] hover:bg-[#E67A62]/20'
+                  : 'bg-white border-gray-200 text-zinc-600 hover:text-[#1a1a1a] hover:border-gray-400'
+              }`}
+            >
+              <svg viewBox="0 0 24 24" fill={project?.upvotes?.includes(currentUserId || '') ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+              {project?.upvoteCount || 0}
+            </button>
+            {(project?.githubLink || project?.livelink) && (
+              <>
+                {project.githubLink && (
+                  <a href={project.githubLink} target="_blank" rel="noreferrer" className="flex items-center gap-2 h-10 px-4 rounded-xl border border-gray-200 text-[13px] font-semibold text-zinc-600 hover:text-[#1a1a1a] hover:border-gray-400 transition-all">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
+                    View on GitHub
+                  </a>
+                )}
+                {project.livelink && (
+                  <a href={project.livelink} target="_blank" rel="noreferrer" className="flex items-center gap-2 h-10 px-5 rounded-xl bg-[#E67A62] hover:bg-[#D66D57] text-white text-[13px] font-bold transition-all hover:-translate-y-[1px] shadow-[0_4px_12px_rgba(230,122,98,0.3)]">
+                    Live Demo ↗
+                  </a>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -204,6 +234,39 @@ const LandingPage = () => {
 
   const handleShareProject = () => {
     navigate(user ? '/profile' : '/signup');
+  };
+
+  const handleUpvote = async (projectId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!user) {
+      navigate('/signin');
+      return;
+    }
+
+    setTrendingProjects(prev => prev.map(p => {
+      if (p._id === projectId) {
+        const hasUpvoted = p.upvotes?.includes(user._id);
+        const upvotes = hasUpvoted
+          ? (p.upvotes || []).filter(id => id !== user._id)
+          : [...(p.upvotes || []), user._id];
+        const upvoteCount = hasUpvoted
+          ? Math.max(0, (p.upvoteCount || 0) - 1)
+          : (p.upvoteCount || 0) + 1;
+        
+        const updatedProject = { ...p, upvotes, upvoteCount };
+        if (selectedProject?._id === projectId) {
+          setSelectedProject(updatedProject);
+        }
+        return updatedProject;
+      }
+      return p;
+    }));
+
+    try {
+      await fetchWithAuth(`/project/${projectId}/upvote`, { method: 'PATCH' });
+    } catch {
+      // Silently fail or revert on error
+    }
   };
 
   return (
@@ -299,6 +362,8 @@ const LandingPage = () => {
                   key={project._id}
                   project={project}
                   onClick={() => setSelectedProject(project)}
+                  onUpvote={handleUpvote}
+                  currentUserId={user?._id}
                 />
               ))}
             </div>
@@ -330,7 +395,7 @@ const LandingPage = () => {
       <Footer />
 
       {/* Project detail modal */}
-      <MiniModal project={selectedProject} onClose={() => setSelectedProject(null)} />
+      <MiniModal project={selectedProject} onClose={() => setSelectedProject(null)} onUpvote={handleUpvote} currentUserId={user?._id} />
     </div>
   );
 };
