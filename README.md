@@ -96,14 +96,6 @@ Launchpad/
 
 ---
 
-## 🛣️ Roadmap
-
-- [ ] **Comments Section**: Interactive feedback loops for every project.
-- [ ] **User Notifications**: Get notified when someone interacts with your project.
-- [ ] **Dark Mode Support**: Seamless transition between light and dark themes.
-
----
-
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
