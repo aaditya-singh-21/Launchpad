@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { fetchPublic, fetchWithAuth } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import type { User } from '../context/AuthContext';
 
 export interface Owner {
   _id: string;
@@ -21,6 +22,9 @@ export interface Project {
   upvotes?: string[];
   upvoteCount?: number;
 }
+
+export interface CommentAuthor { _id: string; name: string; email: string; }
+export interface IComment { _id: string; content: string; author: CommentAuthor; createdAt: string; }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 export const getInitials = (name: string) =>
@@ -49,17 +53,218 @@ const GithubIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// ── Comments Section ─────────────────────────────────────────────────────────
+const CommentsSection = ({
+  projectId,
+  projectOwnerId,
+  currentUser,
+}: {
+  projectId: string;
+  projectOwnerId: string;
+  currentUser: User | null;
+}) => {
+  const navigate = useNavigate();
+  const [comments, setComments] = useState<IComment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [draft, setDraft] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState('');
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    fetchPublic(`/project/${projectId}/comment`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setComments(d.comments ?? []); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, [projectId]);
+
+  const handlePost = async () => {
+    if (!currentUser) { navigate('/signin'); return; }
+    if (draft.trim().length < 3) return;
+    setSubmitting(true);
+    try {
+      const res = await fetchWithAuth(`/project/${projectId}/comment`, {
+        method: 'POST',
+        body: JSON.stringify({ content: draft.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComments(prev => [data.comment, ...prev]);
+        setDraft('');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEdit = async (commentId: string) => {
+    if (editDraft.trim().length < 3) return;
+    try {
+      const res = await fetchWithAuth(`/project/${projectId}/comment/${commentId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ content: editDraft.trim() }),
+      });
+      if (res.ok) {
+        setComments(prev => prev.map(c =>
+          c._id === commentId ? { ...c, content: editDraft.trim() } : c
+        ));
+        setEditingId(null);
+      }
+    } catch {}
+  };
+
+  const handleDelete = async (commentId: string) => {
+    try {
+      const res = await fetchWithAuth(`/project/${projectId}/comment/${commentId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) setComments(prev => prev.filter(c => c._id !== commentId));
+    } catch {}
+  };
+
+  const canEdit = (c: IComment) => currentUser?._id === c.author._id;
+  const canDelete = (c: IComment) =>
+    currentUser?._id === c.author._id || currentUser?._id === projectOwnerId;
+
+  return (
+    <div className="mt-6 border-t border-gray-100 pt-5">
+      <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-4">Discussion</p>
+
+      {/* Post box */}
+      {currentUser ? (
+        <div className="flex gap-3 mb-5">
+          <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${ownerColor(currentUser._id)} flex items-center justify-center text-white text-[10px] font-extrabold shrink-0 mt-0.5`}>
+            {getInitials(currentUser.name)}
+          </div>
+          <div className="flex-1">
+            <textarea
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              placeholder="Share your thoughts…"
+              rows={2}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50/80 text-[13px] text-[#1a1a1a] placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-[#E67A62]/20 focus:border-[#E67A62] transition-colors resize-none"
+            />
+            <button
+              onClick={handlePost}
+              disabled={submitting || draft.trim().length < 3}
+              className="mt-2 h-8 px-4 rounded-xl bg-[#E67A62] hover:bg-[#D66D57] disabled:opacity-40 disabled:cursor-not-allowed text-white text-[12px] font-bold transition-all"
+            >
+              {submitting ? 'Posting…' : 'Post'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => navigate('/signin')}
+          className="mb-5 w-full py-2.5 rounded-xl border border-dashed border-gray-200 text-[13px] text-zinc-400 hover:border-[#E67A62]/40 hover:text-[#E67A62] transition-colors"
+        >
+          Sign in to leave a comment
+        </button>
+      )}
+
+      {/* List */}
+      {isLoading ? (
+        <div className="flex justify-center py-6">
+          <div className="w-6 h-6 border-2 border-[#E67A62] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : comments.length === 0 ? (
+        <p className="text-center text-[13px] text-zinc-400 py-6">No comments yet. Be the first!</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {comments.map(c => (
+            <div key={c._id} className="bg-[#faf7f2] rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-6 h-6 rounded-lg bg-gradient-to-br ${ownerColor(c.author._id)} flex items-center justify-center text-white text-[9px] font-extrabold shrink-0`}>
+                  {getInitials(c.author.name)}
+                </div>
+                <span className="text-[12px] font-semibold text-zinc-600">{c.author.name}</span>
+                <span className="text-zinc-300">·</span>
+                <span className="text-[11px] text-zinc-400">
+                  {new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+                {/* Actions */}
+                <div className="ml-auto flex items-center gap-2">
+                  {canEdit(c) && editingId !== c._id && (
+                    <button
+                      onClick={() => { setEditingId(c._id); setEditDraft(c.content); }}
+                      className="text-zinc-300 hover:text-[#E67A62] transition-colors"
+                      title="Edit"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                  )}
+                  {canDelete(c) && (
+                    <button
+                      onClick={() => handleDelete(c._id)}
+                      className="text-zinc-300 hover:text-red-400 transition-colors"
+                      title="Delete"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Content / edit inline */}
+              {editingId === c._id ? (
+                <div className="pl-8">
+                  <textarea
+                    value={editDraft}
+                    onChange={e => setEditDraft(e.target.value)}
+                    rows={2}
+                    autoFocus
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-[13px] text-[#1a1a1a] outline-none focus:ring-2 focus:ring-[#E67A62]/20 focus:border-[#E67A62] transition-colors resize-none"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => handleEdit(c._id)}
+                      disabled={editDraft.trim().length < 3}
+                      className="h-7 px-3 rounded-lg bg-[#E67A62] hover:bg-[#D66D57] disabled:opacity-40 text-white text-[11px] font-bold transition-all"
+                    >Save</button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="h-7 px-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-zinc-500 text-[11px] font-semibold transition-all"
+                    >Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <p className="pl-8 text-[13px] text-zinc-600 leading-relaxed whitespace-pre-wrap">{c.content}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      <div ref={bottomRef} />
+    </div>
+  );
+};
+
 // ── Detail Modal ──────────────────────────────────────────────────────────────
 const ProjectDetailModal = ({
   project,
   onClose,
   onUpvote,
   currentUserId,
+  currentUser,
 }: {
   project: Project | null;
   onClose: () => void;
   onUpvote: (id: string, e?: React.MouseEvent) => void;
   currentUserId?: string;
+  currentUser: User | null;
 }) => {
   if (!project) return null;
 
@@ -188,6 +393,13 @@ const ProjectDetailModal = ({
               </>
             )}
           </div>
+
+          {/* Comments */}
+          <CommentsSection
+            projectId={project._id}
+            projectOwnerId={project.owner._id}
+            currentUser={currentUser}
+          />
         </div>
       </div>
     </div>
@@ -529,6 +741,7 @@ const ExplorePage = () => {
         onClose={() => setSelectedProject(null)}
         onUpvote={handleUpvote}
         currentUserId={user?._id}
+        currentUser={user}
       />
     </div>
   );
