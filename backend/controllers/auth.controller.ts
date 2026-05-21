@@ -49,7 +49,7 @@ export const login = async (req: Request, res: Response) => {
         const { email, password } = parsedBody
         const normalizedEmail = email.toLowerCase()
         const user = await UserModel.findOne(({ email: normalizedEmail }))
-        if (user) {
+        if (user && user.password) {
             const isMatch = await bcrypt.compare(password, user.password)
             if (isMatch) {
                 const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!);
