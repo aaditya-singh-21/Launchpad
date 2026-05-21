@@ -3,14 +3,14 @@ import { IUser } from "./user.interface";
 
 
 export interface IProject {
-    title : String,
-    description : String,
-    techStack : String[],
-    livelink? : String,
-    githubLink? : String
+    title : string,
+    description : string,
+    techStack : string[],
+    livelink? : string,
+    githubLink? : string
     owner : Types.ObjectId | IUser,
     upvotes : Types.ObjectId[] | IUser,
     upvoteCount : Number,
-    createdAt : Date,
-    updatedAt : Date
+    createdAt?: Date,
+    updatedAt?: Date
 }
