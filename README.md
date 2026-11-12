@@ -37,20 +37,20 @@ Launchpad is a modern, full-stack platform designed for developers to showcase t
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v18+)
+- Node.js (v20.19+ or v22.12+)
 - MongoDB (Local or Atlas)
-- npm or yarn
+- npm
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/Launchpad.git
+git clone https://github.com/aaditya-singh-21/Launchpad.git
 cd Launchpad
 ```
 
 ### 2. Backend Setup
 ```bash
 cd backend
-npm install
+npm ci
 ```
 Create a `.env` file in the `backend` directory:
 ```env
@@ -66,7 +66,7 @@ npm run dev
 ### 3. Frontend Setup
 ```bash
 cd ../frontend
-npm install
+npm ci
 ```
 Run the frontend:
 ```bash
